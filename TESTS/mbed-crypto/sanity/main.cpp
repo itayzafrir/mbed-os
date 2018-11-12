@@ -125,6 +125,34 @@ void test_crypto_symmetric_cipher_encrypt_decrypt(void)
     mbedtls_psa_crypto_free();
 }
 
+void test_crypto_asymmetric_sign_verify(void)
+{
+    psa_key_slot_t slot = 1;
+    psa_key_type_t key_type = PSA_KEY_TYPE_RSA_KEYPAIR;
+    psa_algorithm_t alg = PSA_ALG_RSA_PKCS1V15_CRYPT;
+    size_t key_bits = 512;
+    psa_key_policy_t policy;
+    unsigned char input[100];
+    unsigned char signature[64];
+    size_t signature_len;
+
+    TEST_ASSERT_EQUAL(PSA_SUCCESS, psa_crypto_init());
+
+    psa_key_policy_init(&policy);
+    psa_key_policy_set_usage(&policy, PSA_KEY_USAGE_SIGN | PSA_KEY_USAGE_VERIFY, alg);
+    TEST_ASSERT_EQUAL(PSA_SUCCESS, psa_set_key_policy(slot, &policy));
+    TEST_ASSERT_EQUAL(PSA_SUCCESS, psa_generate_key(slot, key_type, key_bits, NULL, 0));
+    TEST_ASSERT_EQUAL(PSA_SUCCESS, psa_generate_random(input, sizeof(input)));
+    TEST_ASSERT_EQUAL(PSA_SUCCESS, psa_asymmetric_sign(slot, alg, input, sizeof(input),
+                                                       signature, sizeof(signature), &signature_len));
+    TEST_ASSERT_EQUAL(sizeof(signature), signature_len);
+    TEST_ASSERT_EQUAL(PSA_SUCCESS, psa_asymmetric_verify(slot, alg, input, sizeof(input),
+                                                         signature, signature_len));
+    TEST_ASSERT_EQUAL(PSA_SUCCESS, psa_destroy_key(slot));
+
+    mbedtls_psa_crypto_free();
+}
+
 utest::v1::status_t case_failure_handler(const Case *const source, const failure_t reason)
 {
     mbedtls_psa_crypto_free();
@@ -142,7 +170,8 @@ Case cases[] = {
     Case("mbed-crypto random", test_crypto_random, case_failure_handler),
     Case("mbed-crypto asymmetric encrypt/decrypt", test_crypto_asymmetric_encrypt_decrypt, case_failure_handler),
     Case("mbed-crypto hash verify", test_crypto_hash_verify, case_failure_handler),
-    Case("mbed-crypto symmetric cipher encrypt/decrypt", test_crypto_symmetric_cipher_encrypt_decrypt, case_failure_handler)
+    Case("mbed-crypto symmetric cipher encrypt/decrypt", test_crypto_symmetric_cipher_encrypt_decrypt, case_failure_handler),
+    Case("mbed-crypto asymmetric sign/verify", test_crypto_asymmetric_encrypt_decrypt, case_failure_handler)
 };
 
 Specification specification(test_setup, cases);
