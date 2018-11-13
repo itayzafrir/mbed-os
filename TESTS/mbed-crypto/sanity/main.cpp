@@ -18,9 +18,13 @@ void test_crypto_random(void)
     TEST_ASSERT_EQUAL(PSA_SUCCESS, psa_crypto_init());
 
     memcpy(output + bytes, trail, sizeof(trail));
+    /* Run several times, to ensure that every output byte will be
+     * nonzero at least once with overwhelming probability
+     * (2^(-8*number_of_runs)). */
     for (run = 0; run < 10; run++) {
         memset(output, 0, bytes);
         TEST_ASSERT_EQUAL(PSA_SUCCESS, psa_generate_random(output, bytes));
+        /* Check that no more than 'bytes' have been overwritten */
         TEST_ASSERT_EQUAL_UINT8_ARRAY(trail, output + bytes, sizeof(trail));
 
         for (i = 0; i < bytes; i++) {
@@ -30,6 +34,9 @@ void test_crypto_random(void)
         }
     }
 
+    /* Check that every byte was changed to nonzero at least once. This
+     * validates that psa_generate_random is overwriting every byte of
+     * the output buffer. */
     for (i = 0; i < bytes; i++) {
         TEST_ASSERT_NOT_EQUAL(0, changed[i]);
     }
@@ -72,6 +79,7 @@ void test_crypto_hash_verify(void)
 {
     psa_algorithm_t alg = PSA_ALG_SHA_256;
     psa_hash_operation_t operation;
+    /* SHA-256 hash of an empty string */
     unsigned char hash[] = {
         0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x9a, 0xfb, 0xf4, 0xc8,
         0x99, 0x6f, 0xb9, 0x24, 0x27, 0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c,
