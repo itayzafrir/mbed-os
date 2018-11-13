@@ -137,10 +137,10 @@ void test_crypto_asymmetric_sign_verify(void)
 {
     psa_key_slot_t slot = 1;
     psa_key_type_t key_type = PSA_KEY_TYPE_RSA_KEYPAIR;
-    psa_algorithm_t alg = PSA_ALG_RSA_PKCS1V15_CRYPT;
+    psa_algorithm_t alg = PSA_ALG_RSA_PKCS1V15_SIGN_RAW;
     size_t key_bits = 512;
     psa_key_policy_t policy;
-    unsigned char input[100];
+    unsigned char input[50];
     unsigned char signature[64];
     size_t signature_len;
 
@@ -210,7 +210,7 @@ Case cases[] = {
     Case("mbed-crypto asymmetric encrypt/decrypt", test_crypto_asymmetric_encrypt_decrypt, case_failure_handler),
     Case("mbed-crypto hash verify", test_crypto_hash_verify, case_failure_handler),
     Case("mbed-crypto symmetric cipher encrypt/decrypt", test_crypto_symmetric_cipher_encrypt_decrypt, case_failure_handler),
-    Case("mbed-crypto asymmetric sign/verify", test_crypto_asymmetric_encrypt_decrypt, case_failure_handler),
+    Case("mbed-crypto asymmetric sign/verify", test_crypto_asymmetric_sign_verify, case_failure_handler),
     Case("mbed-crypto key derivation", test_crypto_key_derivation, case_failure_handler)
 };
 
