@@ -115,7 +115,7 @@ void test_crypto_symmetric_cipher_encrypt_decrypt(void)
         0x28, 0x8d, 0x76, 0xc0, 0xa7, 0x09, 0x50, 0x3f,
         0x87, 0x96, 0x1e, 0x96, 0x05, 0xcb, 0xb9, 0x6d
     };
-    unsigned char encrypted[sizeof(input)], decrypted[sizeof(input)], iv[sizeof(input)];
+    unsigned char encrypted[sizeof(input)], decrypted[sizeof(input)], iv[16];
 
     memset(iv, 0x2a, sizeof(iv));
     TEST_ASSERT_EQUAL(PSA_SUCCESS, psa_crypto_init());
