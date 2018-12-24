@@ -29,6 +29,8 @@
 extern "C"
 {
 #endif
+#define PSA_ITS_API_VERSION_MAJOR  0  /**< The major version number of the PSA ITS API. It will be incremented on significant updates that may include breaking changes */
+#define PSA_ITS_API_VERSION_MINOR  7  /**< The minor version number of the PSA ITS API. It will be incremented in small updates that are unlikely to include breaking changes */
 
 /** \brief Flags used when creating a key
  */
