@@ -34,7 +34,8 @@ extern "C"
  */
 typedef uint32_t psa_its_create_flags_t;
 
-#define PSA_ITS_WRITE_ONCE_FLAG (1 << 0) /**< The data associated with the key will not be able to be modified or deleted. Intended to be used to set bits in `psa_its_create_flags_t` */
+#define PSA_ITS_FLAG_NONE        0
+#define PSA_ITS_FLAG_WRITE_ONCE (1 << 0) /**< The data associated with the key will not be able to be modified or deleted. Intended to be used to set bits in `psa_its_create_flags_t` */
 
 /**
  * \brief A container for metadata associated with a specific key

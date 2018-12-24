@@ -145,7 +145,7 @@ psa_its_status_t psa_its_set_impl(int32_t pid, uint32_t uid, uint32_t data_lengt
     KVStore *kvstore = get_kvstore_instance();
     MBED_ASSERT(kvstore);
 
-    if ((create_flags != 0) && (create_flags != PSA_ITS_WRITE_ONCE_FLAG)) {
+    if ((create_flags != 0) && (create_flags != PSA_ITS_FLAG_WRITE_ONCE)) {
         return PSA_ITS_ERROR_FLAGS_NOT_SUPPORTED;
     }
 
@@ -154,7 +154,7 @@ psa_its_status_t psa_its_set_impl(int32_t pid, uint32_t uid, uint32_t data_lengt
     generate_fn(kv_key, PSA_ITS_FILENAME_MAX_LEN, uid, pid);
 
     uint32_t kv_create_flags = 0;
-    if (create_flags & PSA_ITS_WRITE_ONCE_FLAG) {
+    if (create_flags & PSA_ITS_FLAG_WRITE_ONCE) {
         kv_create_flags = KVStore::WRITE_ONCE_FLAG;
     }
 
@@ -217,7 +217,7 @@ psa_its_status_t psa_its_get_info_impl(int32_t pid, uint32_t uid, struct psa_its
     if (status == MBED_SUCCESS) {
         p_info->flags = 0;
         if (kv_info.flags & KVStore::WRITE_ONCE_FLAG) {
-            p_info->flags |= PSA_ITS_WRITE_ONCE_FLAG;
+            p_info->flags |= PSA_ITS_FLAG_WRITE_ONCE;
         }
         p_info->size = (uint32_t)(kv_info.size);   // kv_info.size is of type size_t
     }
