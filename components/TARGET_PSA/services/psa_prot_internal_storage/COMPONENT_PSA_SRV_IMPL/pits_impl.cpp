@@ -34,8 +34,8 @@ using namespace mbed;
 #define STR_EXPAND(tok)                 #tok
 
 // Maximum length of filename we use for kvstore API.
-// uid: 6; delimiter: 1; pid: 6; str terminator: 1
-#define PSA_ITS_FILENAME_MAX_LEN        14
+// pid: 6; delimiter: 1; uid: 11; str terminator: 1
+#define PSA_ITS_FILENAME_MAX_LEN        19
 
 
 const uint8_t base64_coding_table[] = {
@@ -97,7 +97,20 @@ static psa_its_status_t convert_status(int status)
  * \param n[in] number of bits to shift right
  * \return the result
  */
-MBED_FORCEINLINE uint32_t lsr(uint32_t x, uint32_t n)
+MBED_FORCEINLINE uint32_t lsr32(uint32_t x, uint32_t n)
+{
+    return x >> n;
+}
+
+/*
+ * \brief Logic shift right
+ *
+ * \note must operate on unsinged integers to prevent negative carry
+ * \param x[in] input number for shifting
+ * \param n[in] number of bits to shift right
+ * \return the result
+ */
+MBED_FORCEINLINE uint64_t lsr64(uint64_t x, uint32_t n)
 {
     return x >> n;
 }
@@ -113,7 +126,7 @@ MBED_FORCEINLINE uint32_t lsr(uint32_t x, uint32_t n)
  * \param[in]  uid - PSA internal storage unique ID
  * \param[in]  pid - owner PSA partition ID
  */
-static void generate_fn(char *tdb_filename, uint32_t tdb_filename_size, uint32_t uid, int32_t pid)
+static void generate_fn(char *tdb_filename, uint32_t tdb_filename_size, psa_its_uid_t uid, int32_t pid)
 {
     MBED_ASSERT(tdb_filename != NULL);
     MBED_ASSERT(tdb_filename_size == PSA_ITS_FILENAME_MAX_LEN);
@@ -124,7 +137,7 @@ static void generate_fn(char *tdb_filename, uint32_t tdb_filename_size, uint32_t
     // Iterate on PID; each time convert 6 bits of PID into a character; first iteration must be done
     do {
         tdb_filename[filename_idx++] = base64_coding_table[unsigned_pid & 0x3F];
-        unsigned_pid = lsr(unsigned_pid, 6);
+        unsigned_pid = lsr32(unsigned_pid, 6);
     } while (unsigned_pid != 0);
 
     // Write delimiter
@@ -133,14 +146,14 @@ static void generate_fn(char *tdb_filename, uint32_t tdb_filename_size, uint32_t
     // Iterate on UID; each time convert 6 bits of UID into a character; first iteration must be done
     do {
         tdb_filename[filename_idx++] = base64_coding_table[uid & 0x3F];
-        uid = lsr(uid, 6);
+        uid = lsr64(uid, 6);
     } while (uid != 0);
 
     tdb_filename[filename_idx++] = '\0';
     MBED_ASSERT(filename_idx <= PSA_ITS_FILENAME_MAX_LEN);
 }
 
-psa_its_status_t psa_its_set_impl(int32_t pid, uint32_t uid, uint32_t data_length, const void *p_data, psa_its_create_flags_t create_flags)
+psa_its_status_t psa_its_set_impl(int32_t pid, psa_its_uid_t uid, uint32_t data_length, const void *p_data, psa_its_create_flags_t create_flags)
 {
     KVStore *kvstore = get_kvstore_instance();
     MBED_ASSERT(kvstore);
@@ -163,7 +176,7 @@ psa_its_status_t psa_its_set_impl(int32_t pid, uint32_t uid, uint32_t data_lengt
     return convert_status(status);
 }
 
-psa_its_status_t psa_its_get_impl(int32_t pid, uint32_t uid, uint32_t data_offset, uint32_t data_length, void *p_data)
+psa_its_status_t psa_its_get_impl(int32_t pid, psa_its_uid_t uid, uint32_t data_offset, uint32_t data_length, void *p_data)
 {
     KVStore *kvstore = get_kvstore_instance();
     MBED_ASSERT(kvstore);
@@ -202,7 +215,7 @@ psa_its_status_t psa_its_get_impl(int32_t pid, uint32_t uid, uint32_t data_offse
     return convert_status(status);
 }
 
-psa_its_status_t psa_its_get_info_impl(int32_t pid, uint32_t uid, struct psa_its_info_t *p_info)
+psa_its_status_t psa_its_get_info_impl(int32_t pid, psa_its_uid_t uid, struct psa_its_info_t *p_info)
 {
     KVStore *kvstore = get_kvstore_instance();
     MBED_ASSERT(kvstore);
@@ -225,7 +238,7 @@ psa_its_status_t psa_its_get_info_impl(int32_t pid, uint32_t uid, struct psa_its
     return convert_status(status);
 }
 
-psa_its_status_t psa_its_remove_impl(int32_t pid, uint32_t uid)
+psa_its_status_t psa_its_remove_impl(int32_t pid, psa_its_uid_t uid)
 {
     KVStore *kvstore = get_kvstore_instance();
     MBED_ASSERT(kvstore);

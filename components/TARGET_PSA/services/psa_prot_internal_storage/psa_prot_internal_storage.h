@@ -36,6 +36,10 @@ extern "C"
  */
 typedef uint32_t psa_its_create_flags_t;
 
+/** \brief A type for UIDs used for identifying data
+ */
+typedef uint64_t psa_its_uid_t;
+
 #define PSA_ITS_FLAG_NONE        0
 #define PSA_ITS_FLAG_WRITE_ONCE (1 << 0) /**< The data associated with the key will not be able to be modified or deleted. Intended to be used to set bits in `psa_its_create_flags_t` */
 
@@ -82,7 +86,8 @@ typedef uint32_t psa_its_status_t;
  * \retval      PSA_ITS_ERROR_BAD_POINTER            The operation failed because one of the provided pointers(`p_data`)
  *                                                  is invalid, for example is `NULL` or references memory the caller cannot access
  */
-psa_its_status_t psa_its_set(uint32_t uid, uint32_t data_length, const void *p_data, psa_its_create_flags_t create_flags);
+psa_its_status_t psa_its_set(psa_its_uid_t uid, uint32_t data_length,
+                             const void *p_data, psa_its_create_flags_t create_flags);
 
 /**
  * \brief Retrieve the value associated with a provided uid
@@ -104,7 +109,8 @@ psa_its_status_t psa_its_set(uint32_t uid, uint32_t data_length, const void *p_d
  * \retval      PSA_ITS_ERROR_OFFSET_INVALID     The operation failed because an offset was supplied that is invalid for the existing data associated with the
  *                                               uid. For example, offset + size is invalid,
  */
-psa_its_status_t psa_its_get(uint32_t uid, uint32_t data_offset,  uint32_t data_length, void *p_data);
+psa_its_status_t psa_its_get(psa_its_uid_t uid, uint32_t data_offset,
+                             uint32_t data_length, void *p_data);
 
 /**
  * \brief Retrieve the metadata about the provided uid
@@ -120,7 +126,7 @@ psa_its_status_t psa_its_get(uint32_t uid, uint32_t data_offset,  uint32_t data_
  * \retval      PSA_ITS_ERROR_BAD_POINTER        The operation failed because one of the provided pointers(`p_info`)
  *                                              is invalid, for example is `NULL` or references memory the caller cannot access
  */
-psa_its_status_t psa_its_get_info(uint32_t uid, struct psa_its_info_t *p_info);
+psa_its_status_t psa_its_get_info(psa_its_uid_t uid, struct psa_its_info_t *p_info);
 
 /**
  * \brief Remove the provided key and its associated data from the storage
@@ -134,7 +140,7 @@ psa_its_status_t psa_its_get_info(uint32_t uid, struct psa_its_info_t *p_info);
  * \retval      PSA_ITS_ERROR_WRITE_ONCE         The operation failed because the provided key value was created with psa_its_WRITE_ONCE_FLAG
  * \retval      PSA_ITS_ERROR_STORAGE_FAILURE    The operation failed because the physical storage has failed (Fatal error)
  */
-psa_its_status_t psa_its_remove(uint32_t uid);
+psa_its_status_t psa_its_remove(psa_its_uid_t uid);
 
 #ifdef   __cplusplus
 }
