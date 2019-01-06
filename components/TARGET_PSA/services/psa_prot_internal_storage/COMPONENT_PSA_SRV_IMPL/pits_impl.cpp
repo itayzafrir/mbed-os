@@ -21,17 +21,16 @@
 #include "TDBStore.h"
 #include "psa_prot_internal_storage.h"
 #include "pits_impl.h"
+#include "pits_version_impl.h"
 #include "mbed_error.h"
 #include "mbed_toolchain.h"
+
+using namespace mbed;
 
 #ifdef   __cplusplus
 extern "C"
 {
 #endif
-
-using namespace mbed;
-
-#define STR_EXPAND(tok)                 #tok
 
 // Maximum length of filename we use for kvstore API.
 // pid: 6; delimiter: 1; uid: 11; str terminator: 1
@@ -49,22 +48,74 @@ const uint8_t base64_coding_table[] = {
     '4', '5', '6', '7', '8', '9', '+', '-'
 };
 
-/*
- * \brief Get default KVStore instance for internal flesh storage
- *
- * \return valid pointer to KVStore
- */
-static KVStore *get_kvstore_instance(void)
+static KVStore *kvstore = NULL;
+
+static void its_init(void)
 {
     KVMap &kv_map = KVMap::get_instance();
-
-    KVStore *kvstore = kv_map.get_internal_kv_instance(STR_EXPAND(MBED_CONF_STORAGE_DEFAULT_KV));
+    kvstore = kv_map.get_internal_kv_instance(STR_EXPAND(MBED_CONF_STORAGE_DEFAULT_KV));
     if (!kvstore) {
         // Can only happen due to system misconfiguration.
         // Thus considered as unrecoverable error for runtime.
         error("Failed getting kvstore instance\n");
     }
-    return kvstore;
+
+    its_version_t version = { 0, 0 };
+    size_t actual_size = 0;
+    KVStore::info_t kv_info;
+    bool write_version = false;
+    int status = kvstore->get_info(ITS_VERSION_KEY, &kv_info);
+    if (status != MBED_SUCCESS) {
+        version.major = PSA_ITS_API_VERSION_MAJOR;
+        version.minor = PSA_ITS_API_VERSION_MINOR;
+        write_version = true;
+    } else {
+        if (kv_info.size != sizeof(version)) {
+            error("ITS version data is corrupt");
+        }
+
+        status = kvstore->get(ITS_VERSION_KEY, &version, sizeof(version), &actual_size, 0);
+        if ((status != MBED_SUCCESS)  ||
+                ((status == MBED_SUCCESS) && (actual_size != sizeof(version)))) {
+            error("Could not read ITS version data");
+        }
+    }
+
+    if ((version.major > PSA_ITS_API_VERSION_MAJOR) ||
+            ((version.major == PSA_ITS_API_VERSION_MAJOR) && (version.minor > PSA_ITS_API_VERSION_MINOR))) {
+        error("Downgrading ITS version is not allowed");
+    }
+
+    if ((version.major < PSA_ITS_API_VERSION_MAJOR) ||
+            ((version.major == PSA_ITS_API_VERSION_MAJOR) && (version.minor < PSA_ITS_API_VERSION_MINOR))) {
+        psa_its_status_t migration_status = its_version_migrate(kvstore, &version);
+        if (migration_status != PSA_ITS_SUCCESS) {
+            error("ITS migration failed");
+        }
+
+        version.major = PSA_ITS_API_VERSION_MAJOR;
+        version.minor = PSA_ITS_API_VERSION_MINOR;
+        write_version = true;
+    }
+
+    if (write_version) {
+        if (kvstore->set(ITS_VERSION_KEY, &version, sizeof(version), 0) != MBED_SUCCESS) {
+            error("Could not write PSA ITS version");
+        }
+    }
+}
+
+// used from test only
+void its_deinit(void)
+{
+    kvstore = NULL;
+}
+
+MBED_WEAK psa_its_status_t its_version_migrate(void *storage, const its_version_t *version)
+{
+    (void)storage;
+    (void)version;
+    return PSA_ITS_SUCCESS;
 }
 
 /*
@@ -155,10 +206,11 @@ static void generate_fn(char *tdb_filename, uint32_t tdb_filename_size, psa_its_
 
 psa_its_status_t psa_its_set_impl(int32_t pid, psa_its_uid_t uid, uint32_t data_length, const void *p_data, psa_its_create_flags_t create_flags)
 {
-    KVStore *kvstore = get_kvstore_instance();
-    MBED_ASSERT(kvstore);
+    if (!kvstore) {
+        its_init();
+    }
 
-    if ((create_flags != 0) && (create_flags != PSA_ITS_FLAG_WRITE_ONCE)) {
+    if ((create_flags & (~PSA_ITS_FLAGS_BIT_MASK)) != 0) {
         return PSA_ITS_ERROR_FLAGS_NOT_SUPPORTED;
     }
 
@@ -178,8 +230,9 @@ psa_its_status_t psa_its_set_impl(int32_t pid, psa_its_uid_t uid, uint32_t data_
 
 psa_its_status_t psa_its_get_impl(int32_t pid, psa_its_uid_t uid, uint32_t data_offset, uint32_t data_length, void *p_data)
 {
-    KVStore *kvstore = get_kvstore_instance();
-    MBED_ASSERT(kvstore);
+    if (!kvstore) {
+        its_init();
+    }
 
     // Generate KVStore key
     char kv_key[PSA_ITS_FILENAME_MAX_LEN] = {'\0'};
@@ -217,8 +270,9 @@ psa_its_status_t psa_its_get_impl(int32_t pid, psa_its_uid_t uid, uint32_t data_
 
 psa_its_status_t psa_its_get_info_impl(int32_t pid, psa_its_uid_t uid, struct psa_its_info_t *p_info)
 {
-    KVStore *kvstore = get_kvstore_instance();
-    MBED_ASSERT(kvstore);
+    if (!kvstore) {
+        its_init();
+    }
 
     // Generate KVStore key
     char kv_key[PSA_ITS_FILENAME_MAX_LEN] = {'\0'};
@@ -240,8 +294,9 @@ psa_its_status_t psa_its_get_info_impl(int32_t pid, psa_its_uid_t uid, struct ps
 
 psa_its_status_t psa_its_remove_impl(int32_t pid, psa_its_uid_t uid)
 {
-    KVStore *kvstore = get_kvstore_instance();
-    MBED_ASSERT(kvstore);
+    if (!kvstore) {
+        its_init();
+    }
 
     // Generate KVStore key
     char kv_key[PSA_ITS_FILENAME_MAX_LEN] = {'\0'};
