@@ -27,7 +27,7 @@
 #
 
 # Set the mbed TLS release to import (this can/should be edited before import)
-MBED_TLS_RELEASE ?= mbedtls-2.15.1
+MBED_TLS_RELEASE ?= development-psa-handles
 
 # Translate between mbed TLS namespace and mbed namespace
 TARGET_PREFIX:=../
@@ -51,7 +51,7 @@ TARGET_PSA_DRIVERS:=$(TARGET_PREFIX_CRYPTO)/targets
 TARGET_NSPE:=$(TARGET_SRV_IMPL)/COMPONENT_NSPE
 
 # mbed TLS source directory - hidden from mbed via TARGET_IGNORE
-MBED_TLS_URL:=git@github.com:ARMmbed/mbedtls-restricted.git
+MBED_TLS_URL:=git@github.com:itayzafrir/mbedtls.git
 MBED_TLS_DIR:=TARGET_IGNORE/mbedtls
 MBED_TLS_API:=$(MBED_TLS_DIR)/include/mbedtls
 MBED_TLS_GIT_CFG=$(MBED_TLS_DIR)/.git/config
