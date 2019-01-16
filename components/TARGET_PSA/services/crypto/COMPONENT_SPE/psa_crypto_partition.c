@@ -19,6 +19,12 @@
 // ------------------------- Globals ---------------------------
 static int psa_spm_init_refence_counter = 0;
 
+/* maximal memoty allocation for reading large hash ort mac input buffers.
+the data will be read in chunks of size */
+#if !defined (MAX_DATA_CHUNK_SIZE)
+    #define MAX_DATA_CHUNK_SIZE 400
+#endif
+
 // ------------------------- Partition's Main Thread ---------------------------
 static void psa_crypto_init_operation(void)
 {
@@ -134,24 +140,57 @@ static void psa_mac_operation(void)
                 }
 
                 case PSA_MAC_UPDATE: {
-                    uint8_t *input_ptr = mbedtls_calloc(1, msg.in_size[1]);
-                    if (input_ptr == NULL) {
+
+                    uint8_t * input_buffer = NULL;
+                    size_t data_remaining = msg.in_size[1];
+                    size_t allocation_size = data_remaining;
+                    size_t size_to_read = 0;
+                    psa_status_t failure_status = PSA_SUCCESS;
+                    
+                    if (allocation_size > MAX_DATA_CHUNK_SIZE)
+                    {
+                        allocation_size = MAX_DATA_CHUNK_SIZE;
+                    }
+
+                    input_buffer = mbedtls_calloc(1, allocation_size);
+                    if (input_buffer == NULL) {
                         status = PSA_ERROR_INSUFFICIENT_MEMORY;
                         break;
                     }
 
-                    bytes_read = psa_read(msg.handle, 1, input_ptr,
-                                          msg.in_size[1]);
+                    while (data_remaining > 0)
+                    {
+                        size_to_read = data_remaining;
+                        if (size_to_read > MAX_DATA_CHUNK_SIZE)
+                        {
+                            size_to_read = MAX_DATA_CHUNK_SIZE;
+                        }
+                        bytes_read = psa_read(msg.handle, 1, input_buffer,
+                                              size_to_read);
 
-                    if (bytes_read != msg.in_size[1]) {
-                        SPM_PANIC("SPM read length mismatch");
+                        if (bytes_read != size_to_read) {
+                            SPM_PANIC("SPM read length mismatch");
+                        }
+
+                        status = psa_mac_update(msg.rhandle,
+                                                input_buffer,
+                                                bytes_read);
+                        
+                        // return first error encountered in case of error.
+                        if ((status != PSA_SUCCESS) && 
+                            (failure_status == PSA_SUCCESS) )
+                        {
+                            failure_status = status;
+                        }
+                        data_remaining = data_remaining - bytes_read;
                     }
+                    // return first error encountered in case of error.
+                    if (failure_status != PSA_SUCCESS)
+                    {
+                        status = failure_status;
+                    }
+                    mbedtls_free(input_buffer);
 
-                    status = psa_mac_update(msg.rhandle,
-                                            input_ptr,
-                                            msg.in_size[1]);
-
-                    mbedtls_free(input_ptr);
                     break;
                 }
 
@@ -281,23 +320,59 @@ static void psa_hash_operation(void)
                 }
 
                 case PSA_HASH_UPDATE: {
-                    uint8_t *input_ptr = mbedtls_calloc(1, msg.in_size[1]);
-                    if (input_ptr == NULL) {
-                        status = PSA_ERROR_INSUFFICIENT_MEMORY;
-                        break;
+                    uint8_t * input_buffer = NULL;
+                    size_t data_remaining = msg.in_size[1];
+                    size_t size_to_read = 0;
+                    size_t allocation_size = data_remaining;
+                    psa_status_t failure_status = PSA_SUCCESS;
+
+                    if (allocation_size > MAX_DATA_CHUNK_SIZE)
+                    {
+                        allocation_size = MAX_DATA_CHUNK_SIZE;
                     }
 
-                    bytes_read = psa_read(msg.handle, 1, input_ptr,
-                                          msg.in_size[1]);
-
-                    if (bytes_read != msg.in_size[1]) {
-                        SPM_PANIC("SPM read length mismatch");
+                    if (input_buffer == NULL)
+                    {
+                        input_buffer = mbedtls_calloc(1, allocation_size);
+                        if (input_buffer == NULL) {
+                            status = PSA_ERROR_INSUFFICIENT_MEMORY;
+                            break;
+                        }
                     }
 
-                    status = psa_hash_update(msg.rhandle,
-                                             input_ptr,
-                                             msg.in_size[1]);
-                    mbedtls_free(input_ptr);
+                    while (data_remaining > 0)
+                    {
+                        size_to_read = data_remaining;
+                        if (size_to_read > MAX_DATA_CHUNK_SIZE)
+                        {
+                            size_to_read = MAX_DATA_CHUNK_SIZE;
+                        }
+                        bytes_read = psa_read(msg.handle, 1, input_buffer,
+                                              size_to_read);
+
+                        if (bytes_read != size_to_read) {
+                            SPM_PANIC("SPM read length mismatch");
+                        }
+
+                        status = psa_hash_update(msg.rhandle,
+                                                input_buffer,
+                                                bytes_read);
+
+                        // return first error encountered in case of error.
+                        if ((status != PSA_SUCCESS) && 
+                            (failure_status == PSA_SUCCESS) )
+                        {
+                            failure_status = status;
+                        }
+                        data_remaining = data_remaining - bytes_read;
+                    }
+                    // return first error encountered in case of error.
+                    if (failure_status != PSA_SUCCESS)
+                    {
+                        status = failure_status;
+                    }
+                    mbedtls_free(input_buffer);
+
                     break;
                 }
 
