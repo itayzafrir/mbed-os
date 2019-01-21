@@ -16,6 +16,11 @@
 #define mbedtls_calloc calloc
 #define mbedtls_free   free
 #endif
+
+#if !defined(MIN)
+#define MIN( a, b ) ( ( ( a ) < ( b ) ) ? ( a ) : ( b ) )
+#endif
+
 // ------------------------- Globals ---------------------------
 static int psa_spm_init_refence_counter = 0;
 
@@ -143,13 +148,8 @@ static void psa_mac_operation(void)
 
                     uint8_t * input_buffer = NULL;
                     size_t data_remaining = msg.in_size[1];
-                    size_t allocation_size = data_remaining;
+                    size_t allocation_size = MIN(data_remaining, MAX_DATA_CHUNK_SIZE);
                     size_t size_to_read = 0;
-                    
-                    if (allocation_size > MAX_DATA_CHUNK_SIZE)
-                    {
-                        allocation_size = MAX_DATA_CHUNK_SIZE;
-                    }
 
                     input_buffer = mbedtls_calloc(1, allocation_size);
                     if (input_buffer == NULL) {
@@ -317,12 +317,7 @@ static void psa_hash_operation(void)
                     uint8_t * input_buffer = NULL;
                     size_t data_remaining = msg.in_size[1];
                     size_t size_to_read = 0;
-                    size_t allocation_size = data_remaining;
-
-                    if (allocation_size > MAX_DATA_CHUNK_SIZE)
-                    {
-                        allocation_size = MAX_DATA_CHUNK_SIZE;
-                    }
+                    size_t allocation_size = MIN(data_remaining, MAX_DATA_CHUNK_SIZE);
 
                     input_buffer = mbedtls_calloc(1, allocation_size);
                     if (input_buffer == NULL) {
