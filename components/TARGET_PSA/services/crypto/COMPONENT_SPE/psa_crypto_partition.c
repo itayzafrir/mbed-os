@@ -145,7 +145,6 @@ static void psa_mac_operation(void)
                     size_t data_remaining = msg.in_size[1];
                     size_t allocation_size = data_remaining;
                     size_t size_to_read = 0;
-                    psa_status_t failure_status = PSA_SUCCESS;
                     
                     if (allocation_size > MAX_DATA_CHUNK_SIZE)
                     {
@@ -176,19 +175,14 @@ static void psa_mac_operation(void)
                                                 input_buffer,
                                                 bytes_read);
                         
-                        // return first error encountered in case of error.
-                        if ((status != PSA_SUCCESS) && 
-                            (failure_status == PSA_SUCCESS) )
+                        // stop on error 
+                        if (status != PSA_SUCCESS)
                         {
-                            failure_status = status;
+                            break;
                         }
                         data_remaining = data_remaining - bytes_read;
                     }
-                    // return first error encountered in case of error.
-                    if (failure_status != PSA_SUCCESS)
-                    {
-                        status = failure_status;
-                    }
+                    
                     mbedtls_free(input_buffer);
 
                     break;
@@ -324,20 +318,16 @@ static void psa_hash_operation(void)
                     size_t data_remaining = msg.in_size[1];
                     size_t size_to_read = 0;
                     size_t allocation_size = data_remaining;
-                    psa_status_t failure_status = PSA_SUCCESS;
 
                     if (allocation_size > MAX_DATA_CHUNK_SIZE)
                     {
                         allocation_size = MAX_DATA_CHUNK_SIZE;
                     }
 
-                    if (input_buffer == NULL)
-                    {
-                        input_buffer = mbedtls_calloc(1, allocation_size);
-                        if (input_buffer == NULL) {
-                            status = PSA_ERROR_INSUFFICIENT_MEMORY;
-                            break;
-                        }
+                    input_buffer = mbedtls_calloc(1, allocation_size);
+                    if (input_buffer == NULL) {
+                        status = PSA_ERROR_INSUFFICIENT_MEMORY;
+                        break;
                     }
 
                     while (data_remaining > 0)
@@ -358,19 +348,14 @@ static void psa_hash_operation(void)
                                                 input_buffer,
                                                 bytes_read);
 
-                        // return first error encountered in case of error.
-                        if ((status != PSA_SUCCESS) && 
-                            (failure_status == PSA_SUCCESS) )
+                        // stop on error 
+                        if (status != PSA_SUCCESS)
                         {
-                            failure_status = status;
+                            break;
                         }
                         data_remaining = data_remaining - bytes_read;
                     }
-                    // return first error encountered in case of error.
-                    if (failure_status != PSA_SUCCESS)
-                    {
-                        status = failure_status;
-                    }
+
                     mbedtls_free(input_buffer);
 
                     break;
