@@ -26,8 +26,8 @@ static int psa_spm_init_refence_counter = 0;
 
 /* maximal memoty allocation for reading large hash ort mac input buffers.
 the data will be read in chunks of size */
-#if !defined (MAX_DATA_CHUNK_SIZE)
-    #define MAX_DATA_CHUNK_SIZE 400
+#if !defined (MAX_DATA_CHUNK_SIZE_IN_BYTES)
+    #define MAX_DATA_CHUNK_SIZE_IN_BYTES 400
 #endif
 
 // ------------------------- Partition's Main Thread ---------------------------
@@ -148,7 +148,7 @@ static void psa_mac_operation(void)
 
                     uint8_t * input_buffer = NULL;
                     size_t data_remaining = msg.in_size[1];
-                    size_t allocation_size = MIN(data_remaining, MAX_DATA_CHUNK_SIZE);
+                    size_t allocation_size = MIN(data_remaining, MAX_DATA_CHUNK_SIZE_IN_BYTES);
                     size_t size_to_read = 0;
 
                     input_buffer = mbedtls_calloc(1, allocation_size);
@@ -159,11 +159,7 @@ static void psa_mac_operation(void)
 
                     while (data_remaining > 0)
                     {
-                        size_to_read = data_remaining;
-                        if (size_to_read > MAX_DATA_CHUNK_SIZE)
-                        {
-                            size_to_read = MAX_DATA_CHUNK_SIZE;
-                        }
+                        size_to_read = MIN(data_remaining, MAX_DATA_CHUNK_SIZE_IN_BYTES);
                         bytes_read = psa_read(msg.handle, 1, input_buffer,
                                               size_to_read);
 
@@ -317,7 +313,7 @@ static void psa_hash_operation(void)
                     uint8_t * input_buffer = NULL;
                     size_t data_remaining = msg.in_size[1];
                     size_t size_to_read = 0;
-                    size_t allocation_size = MIN(data_remaining, MAX_DATA_CHUNK_SIZE);
+                    size_t allocation_size = MIN(data_remaining, MAX_DATA_CHUNK_SIZE_IN_BYTES);
 
                     input_buffer = mbedtls_calloc(1, allocation_size);
                     if (input_buffer == NULL) {
@@ -327,11 +323,7 @@ static void psa_hash_operation(void)
 
                     while (data_remaining > 0)
                     {
-                        size_to_read = data_remaining;
-                        if (size_to_read > MAX_DATA_CHUNK_SIZE)
-                        {
-                            size_to_read = MAX_DATA_CHUNK_SIZE;
-                        }
+                        size_to_read = MIN(data_remaining, MAX_DATA_CHUNK_SIZE_IN_BYTES);
                         bytes_read = psa_read(msg.handle, 1, input_buffer,
                                               size_to_read);
 
