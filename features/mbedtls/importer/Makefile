@@ -93,9 +93,10 @@ rsync:
 	mkdir -p $(TARGET_NSPE)
 	mkdir -p $(TARGET_PSA_DRIVERS)
 
-	rsync -a --delete --exclude='crypto_struct.h' $(MBED_CRYPTO_API) $(TARGET_INC)
+	rsync -a --delete --exclude='crypto_struct.h' --exclude='crypto_types.h' $(MBED_CRYPTO_API) $(TARGET_INC)
 	rsync -a --delete $(MBED_CRYPTO_API)/crypto_struct.h $(TARGET_NSPE)
 	rsync -a --delete $(MBED_CRYPTO_API)/crypto_struct.h $(TARGET_SPE)/crypto_struct_spe.h
+	rsync -a --delete $(MBED_CRYPTO_API)/crypto_types.h $(TARGET_NSPE)
 	rsync -a --delete $(MBED_CRYPTO_DIR)/library/psa_*.c $(TARGET_SRV_IMPL)
 	rsync -a --delete $(MBED_CRYPTO_DIR)/library/psa_*.h $(TARGET_SRV_IMPL)
 
