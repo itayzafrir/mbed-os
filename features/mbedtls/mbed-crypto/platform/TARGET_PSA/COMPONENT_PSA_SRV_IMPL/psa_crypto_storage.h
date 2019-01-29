@@ -59,7 +59,11 @@ extern "C" {
  * This limitation will probably become moot when we implement client
  * separation for key storage.
  */
+#if defined(MBEDTLS_PSA_CRYPTO_STORAGE_ITS_C)
+#define PSA_MAX_PERSISTENT_KEY_IDENTIFIER 0xffff0000ffffffff
+#else
 #define PSA_MAX_PERSISTENT_KEY_IDENTIFIER 0xffff0000
+#endif
 
 /**
  * \brief Format key data and metadata and save to a location for given key
