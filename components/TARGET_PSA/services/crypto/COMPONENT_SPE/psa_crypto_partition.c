@@ -97,6 +97,16 @@ static inline psa_status_t get_hash_clone(size_t index, int32_t partition_id,
     return PSA_SUCCESS;
 }
 
+static inline void assemble_psa_key_id(psa_key_id_t *id, size_t bytes_read, int32_t partition_id)
+{
+    /* move the 32 bit client representation of psa_key_id_t to the upper 32 bits of the 64 bit
+     * server representation of psa_key_id_t.
+     * bytes_read is expected to be 4 bytes, as this is the size of psa_key_id_t on the client side. */
+    *id <<= bytes_read * 8;
+    /* the lower 32 bits of the server representation of psa_key_id_t represent the calling partition id. */
+    *id |= (uint32_t)partition_id;
+}
+
 // ------------------------- Partition's Main Thread ---------------------------
 static void psa_crypto_init_operation(void)
 {
@@ -1166,6 +1176,13 @@ static void psa_key_management_operation(void)
                         SPM_PANIC("SPM read length mismatch");
                     }
 
+                    if (id == 0) {
+                        status = PSA_ERROR_INVALID_ARGUMENT;
+                        break;
+                    }
+
+                    assemble_psa_key_id(&id, msg.in_size[1], psa_identity(msg.handle));
+
                     status = psa_create_key(psa_key_mng.lifetime, id, &psa_key_mng.handle);
                     if (status == PSA_SUCCESS) {
                         psa_write(msg.handle, 0, &psa_key_mng.handle, sizeof(psa_key_mng.handle));
@@ -1180,6 +1197,13 @@ static void psa_key_management_operation(void)
                     if (bytes_read != msg.in_size[1]) {
                         SPM_PANIC("SPM read length mismatch");
                     }
+
+                    if (id == 0) {
+                        status = PSA_ERROR_INVALID_ARGUMENT;
+                        break;
+                    }
+
+                    assemble_psa_key_id(&id, msg.in_size[1], psa_identity(msg.handle));
 
                     status = psa_open_key(psa_key_mng.lifetime, id, &psa_key_mng.handle);
                     if (status == PSA_SUCCESS) {
