@@ -98,16 +98,6 @@ static inline psa_status_t get_hash_clone(size_t index, int32_t partition_id,
     return PSA_SUCCESS;
 }
 
-static inline void assemble_psa_key_id(psa_key_id_t *id, size_t bytes_read, int32_t partition_id)
-{
-    /* move the 32 bit client representation of psa_key_id_t to the upper 32 bits of the 64 bit
-     * server representation of psa_key_id_t.
-     * bytes_read is expected to be 4 bytes, as this is the size of psa_key_id_t on the client side. */
-    *id <<= bytes_read * 8;
-    /* the lower 32 bits of the server representation of psa_key_id_t represent the calling partition id. */
-    *id |= (uint32_t)partition_id;
-}
-
 // ------------------------- Partition's Main Thread ---------------------------
 static void psa_crypto_init_operation(void)
 {
@@ -1284,12 +1274,17 @@ static void psa_key_management_operation(void)
                         SPM_PANIC("SPM read length mismatch");
                     }
 
+                    /* the size of the client side psa_key_id_t is expected to be 4 bytes */
+                    if (msg.in_size[1] != 4) {
+                        SPM_PANIC("Unexpected psa_key_id_t size received from client");
+                    }
+
                     if (id == 0) {
                         status = PSA_ERROR_INVALID_ARGUMENT;
                         break;
                     }
 
-                    assemble_psa_key_id(&id, msg.in_size[1], partition_id);
+                    psa_crypto_access_control_assemble_psa_key_id(&id, partition_id);
 
                     status = psa_create_key(psa_key_mng.lifetime, id, &psa_key_mng.handle);
                     if (status == PSA_SUCCESS) {
@@ -1307,12 +1302,17 @@ static void psa_key_management_operation(void)
                         SPM_PANIC("SPM read length mismatch");
                     }
 
+                    /* the size of the client side psa_key_id_t is expected to be 4 bytes */
+                    if (msg.in_size[1] != 4) {
+                        SPM_PANIC("Unexpected psa_key_id_t size received from client");
+                    }
+
                     if (id == 0) {
                         status = PSA_ERROR_INVALID_ARGUMENT;
                         break;
                     }
 
-                    assemble_psa_key_id(&id, msg.in_size[1], partition_id);
+                    psa_crypto_access_control_assemble_psa_key_id(&id, partition_id);
 
                     status = psa_open_key(psa_key_mng.lifetime, id, &psa_key_mng.handle);
                     if (status == PSA_SUCCESS) {

@@ -17,6 +17,7 @@
 
 #include <string.h>
 
+#define PSA_CRYPTO_SECURE 1
 #include "psa_crypto_access_control.h"
 #include "psa_crypto_slot_management.h"
 #include "spm_panic.h"
