@@ -22,6 +22,7 @@
 
 #include "psa_crypto_core.h"
 #include "crypto_platform.h"
+#include "mbed_assert.h"
 
 void psa_crypto_access_control_init(void);
 
@@ -35,6 +36,8 @@ uint8_t psa_crypto_access_control_is_handle_permitted(psa_key_handle_t key_handl
 
 static inline void psa_crypto_access_control_assemble_psa_key_id(psa_key_id_t *id, int32_t partition_id)
 {
+    MBED_STATIC_ASSERT(sizeof(psa_key_id_t) == 8, "Unexpected psa_key_id_t size");
+
     /* move the 32 bit client representation of psa_key_id_t to the upper 32 bits of the 64 bit
      * server representation of psa_key_id_t. */
     *id <<= 32;
