@@ -34,6 +34,8 @@ static int psa_spm_init_refence_counter = 0;
 #endif
 static psa_spm_hash_clone_t psa_spm_hash_clones[MAX_CONCURRENT_HASH_CLONES];
 
+#define CLIENT_PSA_KEY_ID_SIZE_IN_BYTES 4
+
 // ------------------------- Internal Helper Functions -------------------------
 static inline psa_status_t reserve_hash_clone(int32_t partition_id, void *source_operation, size_t *index)
 {
@@ -1274,8 +1276,7 @@ static void psa_key_management_operation(void)
                         SPM_PANIC("SPM read length mismatch");
                     }
 
-                    /* the size of the client side psa_key_id_t is expected to be 4 bytes */
-                    if (msg.in_size[1] != 4) {
+                    if (msg.in_size[1] != CLIENT_PSA_KEY_ID_SIZE_IN_BYTES) {
                         SPM_PANIC("Unexpected psa_key_id_t size received from client");
                     }
 
@@ -1302,8 +1303,7 @@ static void psa_key_management_operation(void)
                         SPM_PANIC("SPM read length mismatch");
                     }
 
-                    /* the size of the client side psa_key_id_t is expected to be 4 bytes */
-                    if (msg.in_size[1] != 4) {
+                    if (msg.in_size[1] != CLIENT_PSA_KEY_ID_SIZE_IN_BYTES) {
                         SPM_PANIC("Unexpected psa_key_id_t size received from client");
                     }
 
