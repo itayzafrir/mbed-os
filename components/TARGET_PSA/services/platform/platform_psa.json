@@ -25,5 +25,9 @@
     ],
     "source_files": [
       "COMPONENT_SPE/platform_partition.c"
+    ],
+    "extern_sids": [
+      "PSA_ITS_RESET"
     ]
   }
+  
