@@ -64,7 +64,7 @@ rsync:
 	# Copying Mbed Crypto headers to includes...
 	rm -rf $(TARGET_INC)
 	mkdir -p $(TARGET_INC)
-	rsync -a --delete --exclude='crypto_struct.h' --exclude='crypto_types.h' $(CRYPTO_API) $(TARGET_INC)/
+	rsync -a --delete --exclude='crypto_struct.h' $(CRYPTO_API) $(TARGET_INC)/
 	#
 	# Copying licenses
 	cp $(CRYPTO_DIR)/LICENSE $(TARGET_PREFIX)/
@@ -79,7 +79,6 @@ rsync:
 	mkdir -p $(TARGET_NSPE)
 
 	rsync -a --delete $(CRYPTO_API)/crypto_struct.h $(TARGET_NSPE)/
-	rsync -a --delete $(CRYPTO_API)/crypto_types.h $(TARGET_NSPE)/
 	rsync -a --delete $(CRYPTO_API)/crypto_struct.h $(TARGET_SPE)/crypto_struct_spe.h
 	rsync -a --delete $(CRYPTO_DIR)/library/psa_*.c $(TARGET_SRV_IMPL)/
 	rsync -a --delete $(CRYPTO_DIR)/library/psa_*.h $(TARGET_SRV_IMPL)/
