@@ -68,12 +68,26 @@ static psa_status_t its_to_psa_error( psa_its_status_t ret )
     }
 }
 
-static psa_its_uid_t psa_its_identifier_of_slot( psa_key_id_t key )
+static psa_its_uid_t psa_its_identifier_of_slot( psa_key_file_id_t file_id )
 {
-    return( key );
+#if defined(MBEDTLS_PSA_CRYPTO_SPM)
+    /* Encode the owner in the upper 32 bits. This means that if
+     * owner values are nonzero (as they are on a PSA platform),
+     * key files don't clash with file names such as the random seed
+       file which have an identifier in the range 0..0xffffffff. */
+    uint32_t unsigned_owner = (uint32_t) file_id.owner;
+    return( (uint64_t) unsigned_owner << 32 | file_id.key_id );
+#else
+    /* Key file names may clash with non-key files such as the random
+     * seed file PSA_CRYPTO_ITS_RANDOM_SEED_UID. Assume that
+     * psa_is_key_file_id_valid() in psa_crypto_slot_management.c
+     * checks that key identifiers do not have a value that is reserved
+     * for non-key files. */
+    return( file_id );
+#endif
 }
 
-psa_status_t psa_crypto_storage_load( const psa_key_id_t key, uint8_t *data,
+psa_status_t psa_crypto_storage_load( const psa_key_file_id_t key, uint8_t *data,
                                       size_t data_size )
 {
     psa_its_status_t ret;
@@ -92,7 +106,7 @@ psa_status_t psa_crypto_storage_load( const psa_key_id_t key, uint8_t *data,
     return( status );
 }
 
-int psa_is_key_present_in_storage( const psa_key_id_t key )
+int psa_is_key_present_in_storage( const psa_key_file_id_t key )
 {
     psa_its_status_t ret;
     psa_its_uid_t data_identifier = psa_its_identifier_of_slot( key );
@@ -105,7 +119,7 @@ int psa_is_key_present_in_storage( const psa_key_id_t key )
     return( 1 );
 }
 
-psa_status_t psa_crypto_storage_store( const psa_key_id_t key,
+psa_status_t psa_crypto_storage_store( const psa_key_file_id_t key,
                                        const uint8_t *data,
                                        size_t data_length )
 {
@@ -143,7 +157,7 @@ exit:
     return( status );
 }
 
-psa_status_t psa_destroy_persistent_key( const psa_key_id_t key )
+psa_status_t psa_destroy_persistent_key( const psa_key_file_id_t key )
 {
     psa_its_status_t ret;
     psa_its_uid_t data_identifier = psa_its_identifier_of_slot( key );
@@ -163,7 +177,7 @@ psa_status_t psa_destroy_persistent_key( const psa_key_id_t key )
     return( PSA_SUCCESS );
 }
 
-psa_status_t psa_crypto_storage_get_data_length( const psa_key_id_t key,
+psa_status_t psa_crypto_storage_get_data_length( const psa_key_file_id_t key,
                                                  size_t *data_length )
 {
     psa_its_status_t ret;

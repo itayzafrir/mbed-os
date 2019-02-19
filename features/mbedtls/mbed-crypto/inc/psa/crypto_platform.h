@@ -49,4 +49,23 @@
 /* Integral type representing a key handle. */
 typedef uint16_t psa_key_handle_t;
 
+/* Applications always see 32-bit key ids. */
+typedef uint32_t psa_app_key_id_t;
+
+#if defined(MBEDTLS_PSA_CRYPTO_SPM)
+/* When the library is built as part of a PSA Cryptography service on a
+ * PSA platform, a key file ID encodes both the 32-bit key ID used by the
+ * application and the signed 32-bit partition ID of the key owner. */
+typedef struct
+{
+    int32_t owner;
+    uint32_t key_id;
+} psa_key_file_id_t;
+typedef psa_key_file_id_t psa_key_id_t;
+#define PSA_KEY_FILE_GET_KEY_ID( file_id ) ( ( file_id ).key_id )
+#else
+typedef uint32_t psa_key_file_id_t;
+#define PSA_KEY_FILE_GET_KEY_ID( key_id ) ( key_id )
+#endif
+
 #endif /* PSA_CRYPTO_PLATFORM_H */
