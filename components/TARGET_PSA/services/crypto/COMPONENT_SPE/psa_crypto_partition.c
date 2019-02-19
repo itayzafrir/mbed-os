@@ -1269,9 +1269,9 @@ static void psa_key_management_operation(void)
                 }
 
                 case PSA_CREATE_KEY: {
-                    psa_key_id_t id = 0;
+                    psa_key_id_t id;
 
-                    bytes_read = psa_read(msg.handle, 1, &id, msg.in_size[1]);
+                    bytes_read = psa_read(msg.handle, 1, &(id.key_id), msg.in_size[1]);
                     if (bytes_read != msg.in_size[1]) {
                         SPM_PANIC("SPM read length mismatch");
                     }
@@ -1280,12 +1280,13 @@ static void psa_key_management_operation(void)
                         SPM_PANIC("Unexpected psa_key_id_t size received from client");
                     }
 
-                    if (id == 0) {
-                        status = PSA_ERROR_INVALID_ARGUMENT;
-                        break;
-                    }
+                    //if (id == 0) {
+                    //    status = PSA_ERROR_INVALID_ARGUMENT;
+                    //    break;
+                    //}
 
-                    psa_crypto_access_control_assemble_psa_key_id(&id, partition_id);
+                    //psa_crypto_access_control_assemble_psa_key_id(&id, partition_id);
+                    id.owner = partition_id;
 
                     status = psa_create_key(psa_key_mng.lifetime, id, &psa_key_mng.handle);
                     if (status == PSA_SUCCESS) {
@@ -1296,9 +1297,9 @@ static void psa_key_management_operation(void)
                 }
 
                 case PSA_OPEN_KEY: {
-                    psa_key_id_t id = 0;
+                    psa_key_id_t id;
 
-                    bytes_read = psa_read(msg.handle, 1, &id, msg.in_size[1]);
+                    bytes_read = psa_read(msg.handle, 1, &(id.key_id), msg.in_size[1]);
                     if (bytes_read != msg.in_size[1]) {
                         SPM_PANIC("SPM read length mismatch");
                     }
@@ -1307,12 +1308,13 @@ static void psa_key_management_operation(void)
                         SPM_PANIC("Unexpected psa_key_id_t size received from client");
                     }
 
-                    if (id == 0) {
-                        status = PSA_ERROR_INVALID_ARGUMENT;
-                        break;
-                    }
+                    //if (id == 0) {
+                    //    status = PSA_ERROR_INVALID_ARGUMENT;
+                    //    break;
+                    //}
 
-                    psa_crypto_access_control_assemble_psa_key_id(&id, partition_id);
+                    //psa_crypto_access_control_assemble_psa_key_id(&id, partition_id);
+                    id.owner = partition_id;
 
                     status = psa_open_key(psa_key_mng.lifetime, id, &psa_key_mng.handle);
                     if (status == PSA_SUCCESS) {

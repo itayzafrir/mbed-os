@@ -33,6 +33,8 @@ static void read_input_param_from_message(psa_msg_t *msg, uint8_t param_index, v
 
 static psa_status_t crypto_create_persistent_key(psa_msg_t *msg)
 {
+    MBED_STATIC_ASSERT(sizeof(psa_key_id_t) == 4, "Unexpected psa_key_id_t size");
+
     psa_status_t status;
     psa_key_id_t key_id = 0;
     psa_key_handle_t key_handle = 0;
