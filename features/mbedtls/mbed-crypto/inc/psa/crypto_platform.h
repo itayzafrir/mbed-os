@@ -52,7 +52,7 @@ typedef uint16_t psa_key_handle_t;
 /* Applications always see 32-bit key ids. */
 typedef uint32_t psa_app_key_id_t;
 
-#if defined(MBEDTLS_PSA_CRYPTO_SPM)
+#ifdef PSA_CRYPTO_SECURE
 /* When the library is built as part of a PSA Cryptography service on a
  * PSA platform, a key file ID encodes both the 32-bit key ID used by the
  * application and the signed 32-bit partition ID of the key owner. */

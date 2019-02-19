@@ -93,7 +93,7 @@ typedef uint32_t psa_key_lifetime_t;
  * used when building Mbed Crypto as a library inside the PSA Cryptography
  * service. Applications that call the service see the standard API with a
  * 32-bit type. */
-#if !defined(MBEDTLS_PSA_CRYPTO_SPM)
+#ifndef PSA_CRYPTO_SECURE
 typedef uint32_t psa_key_id_t;
 #endif
 
