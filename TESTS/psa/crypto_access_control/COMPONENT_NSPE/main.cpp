@@ -88,7 +88,7 @@ void test_open_other_partition_key(void)
     TEST_ASSERT_EQUAL(PSA_SUCCESS, test_partition_crypto_close_key(key_handle));
 
     /* try to open the key created by the test partition */
-    TEST_ASSERT_EQUAL(PSA_ERROR_EMPTY_SLOT, psa_open_key(PSA_KEY_LIFETIME_PERSISTENT, key_id, &key_handle));
+    TEST_ASSERT_EQUAL(PSA_ERROR_DOES_NOT_EXIST, psa_open_key(PSA_KEY_LIFETIME_PERSISTENT, key_id, &key_handle));
 }
 
 void test_create_key_same_id_different_partitions(void)
